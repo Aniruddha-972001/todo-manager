@@ -38,6 +38,10 @@ async function createDatabaseConnection(): Promise<Database<sqlite3.Database, sq
       id TEXT PRIMARY KEY,
       task TEXT NOT NULL,
       completed INTEGER NOT NULL DEFAULT 0,
+      archived INTEGER NOT NULL DEFAULT 0,
+      priority TEXT NOT NULL DEFAULT 'medium',
+      due_date TEXT,
+      position INTEGER NOT NULL DEFAULT 0,
       list_id TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
@@ -49,6 +53,37 @@ async function createDatabaseConnection(): Promise<Database<sqlite3.Database, sq
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
+  `);
+
+  const todoColumns = await db.all<Array<{ name: string }>>("PRAGMA table_info(todos)");
+  const todoColumnNames = new Set(todoColumns.map((column) => column.name));
+
+  if (!todoColumnNames.has("archived")) {
+    await db.exec("ALTER TABLE todos ADD COLUMN archived INTEGER NOT NULL DEFAULT 0");
+  }
+
+  if (!todoColumnNames.has("priority")) {
+    await db.exec("ALTER TABLE todos ADD COLUMN priority TEXT NOT NULL DEFAULT 'medium'");
+  }
+
+  if (!todoColumnNames.has("due_date")) {
+    await db.exec("ALTER TABLE todos ADD COLUMN due_date TEXT");
+  }
+
+  if (!todoColumnNames.has("position")) {
+    await db.exec("ALTER TABLE todos ADD COLUMN position INTEGER NOT NULL DEFAULT 0");
+  }
+
+  await db.exec(`
+    UPDATE todos
+    SET archived = COALESCE(archived, 0),
+        priority = COALESCE(priority, 'medium'),
+        position = COALESCE(position, 0)
+  `);
+
+  await db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_todos_list_position
+    ON todos (list_id, position, created_at DESC)
   `);
 
   return db;

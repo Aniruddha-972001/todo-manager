@@ -6,8 +6,8 @@ import {
   getListsByCreatorId,
   updateListNameById,
 } from "../models/listModel.js";
-import { createTodo, getTodosByListId } from "../models/todoModel.js";
-import type { List, ListWithTodos, Todo } from "../models/dataStore.js";
+import { createTodo, getNextTodoPosition, getTodosByListId, reorderTodos } from "../models/todoModel.js";
+import type { List, ListWithTodos, Todo, TodoPriority } from "../models/dataStore.js";
 
 type ListOperationResult =
   | { list: List }
@@ -19,6 +19,9 @@ type TodoOperationResult =
 
 type ListDeleteResult = { success: true } | { error: "LIST_NOT_FOUND" | "FORBIDDEN" };
 type ListTodosResult = { list: List; todos: Todo[] } | { error: "LIST_NOT_FOUND" | "FORBIDDEN" };
+type ReorderTodosResult =
+  | { success: true }
+  | { error: "LIST_NOT_FOUND" | "FORBIDDEN" | "INVALID_TODO_ORDER" };
 
 export async function fetchLists(userId: string): Promise<List[]> {
   return getListsByCreatorId(userId);
@@ -95,7 +98,12 @@ export async function fetchListTodos(id: string, userId: string): Promise<ListTo
   return { list, todos };
 }
 
-export async function addTodoToList(id: string, task: string, userId: string): Promise<TodoOperationResult> {
+export async function addTodoToList(
+  id: string,
+  task: string,
+  userId: string,
+  options?: { priority?: TodoPriority; dueDate?: string | null }
+): Promise<TodoOperationResult> {
   const list = await findListById(id);
 
   if (!list) {
@@ -106,13 +114,47 @@ export async function addTodoToList(id: string, task: string, userId: string): P
     return { error: "FORBIDDEN" };
   }
 
+  const position = await getNextTodoPosition(id);
   const newTodo: Todo = {
     id: crypto.randomUUID(),
     task,
     completed: false,
+    archived: false,
+    priority: options?.priority ?? "medium",
+    dueDate: options?.dueDate ?? null,
+    position,
     listId: id,
   };
 
   await createTodo(newTodo);
   return { todo: newTodo };
+}
+
+export async function reorderListTodos(
+  id: string,
+  orderedTodoIds: string[],
+  userId: string
+): Promise<ReorderTodosResult> {
+  const list = await findListById(id);
+
+  if (!list) {
+    return { error: "LIST_NOT_FOUND" };
+  }
+
+  if (list.creatorId !== userId) {
+    return { error: "FORBIDDEN" };
+  }
+
+  const todos = await getTodosByListId(id);
+
+  if (
+    todos.length !== orderedTodoIds.length ||
+    new Set(orderedTodoIds).size !== orderedTodoIds.length ||
+    todos.some((todo) => !orderedTodoIds.includes(todo.id))
+  ) {
+    return { error: "INVALID_TODO_ORDER" };
+  }
+
+  await reorderTodos(id, orderedTodoIds);
+  return { success: true };
 }

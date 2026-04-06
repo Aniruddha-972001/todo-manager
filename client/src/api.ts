@@ -1,4 +1,4 @@
-import type { AuthUser, TodoItem, TodoList, TodoListWithTodos } from "./types";
+import type { AuthUser, TodoItem, TodoList, TodoListWithTodos, TodoPriority } from "./types";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? window.location.origin;
 
@@ -158,14 +158,20 @@ export async function getList(id: string) {
   return request<{ message: string; list: TodoListWithTodos }>(`/api/lists/${id}`);
 }
 
-export async function createTodo(listId: string, task: string) {
+export async function createTodo(
+  listId: string,
+  payload: { task: string; priority?: TodoPriority; dueDate?: string | null }
+) {
   return request<{ message: string; todo: TodoItem }>(`/api/lists/${listId}/todos`, {
     method: "POST",
-    body: JSON.stringify({ task }),
+    body: JSON.stringify(payload),
   });
 }
 
-export async function updateTodo(todoId: string, payload: Partial<Pick<TodoItem, "task" | "completed">>) {
+export async function updateTodo(
+  todoId: string,
+  payload: Partial<Pick<TodoItem, "task" | "completed" | "archived" | "priority" | "dueDate">>
+) {
   return request<{ message: string; todo: TodoItem }>(`/api/todos/${todoId}`, {
     method: "PATCH",
     body: JSON.stringify(payload),
@@ -175,5 +181,12 @@ export async function updateTodo(todoId: string, payload: Partial<Pick<TodoItem,
 export async function deleteTodo(todoId: string) {
   return request<{ message: string }>(`/api/todos/${todoId}`, {
     method: "DELETE",
+  });
+}
+
+export async function reorderTodos(listId: string, orderedTodoIds: string[]) {
+  return request<{ message: string }>(`/api/lists/${listId}/todos/reorder`, {
+    method: "POST",
+    body: JSON.stringify({ orderedTodoIds }),
   });
 }

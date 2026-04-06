@@ -88,9 +88,13 @@ const swaggerDefinition = {
         required: ["task"],
         properties: {
           task: { type: "string", example: "Finish Express refactor" },
+          priority: { type: "string", enum: ["low", "medium", "high"], example: "high" },
+          dueDate: { type: "string", format: "date", nullable: true, example: "2026-04-15" },
         },
         example: {
           task: "Finish Express refactor",
+          priority: "high",
+          dueDate: "2026-04-15",
         },
       },
       UpdateTodoRequest: {
@@ -98,9 +102,23 @@ const swaggerDefinition = {
         properties: {
           task: { type: "string", example: "Finish Express refactor today" },
           completed: { type: "boolean", example: true },
+          archived: { type: "boolean", example: false },
+          priority: { type: "string", enum: ["low", "medium", "high"], example: "low" },
+          dueDate: { type: "string", format: "date", nullable: true, example: "2026-04-20" },
         },
         example: {
           completed: true,
+          priority: "low",
+        },
+      },
+      ReorderTodosRequest: {
+        type: "object",
+        required: ["orderedTodoIds"],
+        properties: {
+          orderedTodoIds: {
+            type: "array",
+            items: { type: "string", example: "uuid-value" },
+          },
         },
       },
       AuthUser: {
@@ -131,6 +149,10 @@ const swaggerDefinition = {
           id: { type: "string", example: "uuid-value" },
           task: { type: "string", example: "Finish Express refactor" },
           completed: { type: "boolean", example: false },
+          archived: { type: "boolean", example: false },
+          priority: { type: "string", enum: ["low", "medium", "high"], example: "medium" },
+          dueDate: { type: "string", format: "date", nullable: true, example: "2026-04-15" },
+          position: { type: "number", example: 0 },
           listId: { type: "string", example: "uuid-value" },
         },
       },

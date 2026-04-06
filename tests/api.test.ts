@@ -143,10 +143,13 @@ describe("API integration", () => {
     const todoResponse = await request(app)
       .post(`/api/lists/${listId}/todos`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ task: "Finish testing flow" })
+      .send({ task: "Finish testing flow", priority: "high", dueDate: "2026-04-12" })
       .expect(201);
 
     const todoId = todoResponse.body.todo.id as string;
+    expect(todoResponse.body.todo.priority).toBe("high");
+    expect(todoResponse.body.todo.dueDate).toBe("2026-04-12");
+    expect(todoResponse.body.todo.archived).toBe(false);
 
     const todosResponse = await request(app)
       .get(`/api/lists/${listId}/todos`)
@@ -155,15 +158,25 @@ describe("API integration", () => {
 
     expect(todosResponse.body.todos).toHaveLength(1);
     expect(todosResponse.body.todos[0].task).toBe("Finish testing flow");
+    expect(todosResponse.body.todos[0].position).toBe(0);
 
     const updatedTodoResponse = await request(app)
       .patch(`/api/todos/${todoId}`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ completed: true, task: "Finish testing flow today" })
+      .send({
+        completed: true,
+        task: "Finish testing flow today",
+        archived: true,
+        priority: "low",
+        dueDate: null,
+      })
       .expect(200);
 
     expect(updatedTodoResponse.body.todo.completed).toBe(true);
     expect(updatedTodoResponse.body.todo.task).toBe("Finish testing flow today");
+    expect(updatedTodoResponse.body.todo.archived).toBe(true);
+    expect(updatedTodoResponse.body.todo.priority).toBe("low");
+    expect(updatedTodoResponse.body.todo.dueDate).toBeNull();
 
     await request(app)
       .delete(`/api/todos/${todoId}`)
@@ -176,6 +189,46 @@ describe("API integration", () => {
       .expect(200);
 
     expect(finalTodosResponse.body.todos).toEqual([]);
+  });
+
+  it("reorders todos within a list", async () => {
+    const { token } = await signupAndLogin("ordering_owner");
+
+    const listResponse = await request(app)
+      .post("/api/lists")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Roadmap" })
+      .expect(201);
+
+    const listId = listResponse.body.list.id as string;
+
+    const firstTodo = await request(app)
+      .post(`/api/lists/${listId}/todos`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ task: "First task" })
+      .expect(201);
+
+    const secondTodo = await request(app)
+      .post(`/api/lists/${listId}/todos`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ task: "Second task", priority: "high" })
+      .expect(201);
+
+    await request(app)
+      .post(`/api/lists/${listId}/todos/reorder`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ orderedTodoIds: [secondTodo.body.todo.id, firstTodo.body.todo.id] })
+      .expect(200);
+
+    const refreshedList = await request(app)
+      .get(`/api/lists/${listId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    expect(refreshedList.body.list.todos.map((todo: { id: string }) => todo.id)).toEqual([
+      secondTodo.body.todo.id,
+      firstTodo.body.todo.id,
+    ]);
   });
 
   it("keeps data scoped to the logged-in user", async () => {

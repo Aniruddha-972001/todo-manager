@@ -4,6 +4,8 @@ export interface User {
   password: string;
 }
 
+export type TodoPriority = "low" | "medium" | "high";
+
 export interface List {
   id: string;
   name: string;
@@ -14,6 +16,10 @@ export interface Todo {
   id: string;
   task: string;
   completed: boolean;
+  archived: boolean;
+  priority: TodoPriority;
+  dueDate: string | null;
+  position: number;
   listId: string;
 }
 

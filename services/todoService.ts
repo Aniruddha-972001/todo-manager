@@ -1,13 +1,20 @@
 import { findListById } from "../models/listModel.js";
 import { deleteTodo, findTodoById, updateTodo } from "../models/todoModel.js";
-import type { Todo } from "../models/dataStore.js";
+import type { Todo, TodoPriority } from "../models/dataStore.js";
 
 type TodoMutationResult = { todo: Todo } | { error: "TODO_NOT_FOUND" | "FORBIDDEN" };
 type TodoDeleteResult = { success: true } | { error: "TODO_NOT_FOUND" | "FORBIDDEN" };
 
 export async function updateTodoDetails(
   todoId: string,
-  updates: { task?: string; completed?: boolean },
+  updates: {
+    task?: string;
+    completed?: boolean;
+    archived?: boolean;
+    priority?: TodoPriority;
+    dueDate?: string | null;
+    position?: number;
+  },
   userId: string
 ): Promise<TodoMutationResult> {
   const todo = await findTodoById(todoId);

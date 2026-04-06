@@ -1,7 +1,8 @@
 import type { Request, Response } from "express";
 import { IS_PRODUCTION, REFRESH_COOKIE_MAX_AGE_MS } from "../config/auth.js";
 import { loginUser, logoutUser, refreshAccessToken, signupUser } from "../services/authService.js";
-import { validateCredentials } from "../utils/validation.js";
+import { AppError } from "../utils/errors.js";
+import { loginSchema, parseWithSchema, signupSchema } from "../utils/validation.js";
 
 const refreshCookieOptions = {
   httpOnly: true,
@@ -11,50 +12,28 @@ const refreshCookieOptions = {
 };
 
 export async function signup(req: Request, res: Response): Promise<Response> {
-  const validation = validateCredentials(
-    (req.body as { username?: unknown }).username,
-    (req.body as { password?: unknown }).password,
-    "signup"
-  );
+  const credentials = parseWithSchema(signupSchema, req.body);
+  const user = await signupUser(credentials.username, credentials.password);
 
-  if ("error" in validation) {
-    return res.status(400).json({ message: validation.error });
+  if (!user) {
+    throw new AppError(409, "User already exists");
   }
 
-  try {
-    const user = await signupUser(validation.value.username, validation.value.password);
-
-    if (!user) {
-      return res.status(409).json({ message: "User already exists" });
-    }
-
-    return res.status(201).json({
-      message: "User created successfully",
-      user: {
-        id: user.id,
-        username: user.username,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({ message: "Failed to create User" });
-  }
+  return res.status(201).json({
+    message: "User created successfully",
+    user: {
+      id: user.id,
+      username: user.username,
+    },
+  });
 }
 
 export async function login(req: Request, res: Response): Promise<Response> {
-  const validation = validateCredentials(
-    (req.body as { username?: unknown }).username,
-    (req.body as { password?: unknown }).password,
-    "login"
-  );
-
-  if ("error" in validation) {
-    return res.status(400).json({ message: validation.error });
-  }
-
-  const session = await loginUser(validation.value.username, validation.value.password);
+  const credentials = parseWithSchema(loginSchema, req.body);
+  const session = await loginUser(credentials.username, credentials.password);
 
   if (!session) {
-    return res.status(401).json({ message: "Invalid credentials" });
+    throw new AppError(401, "Invalid credentials");
   }
 
   res.cookie("refreshToken", session.refreshToken, refreshCookieOptions);
@@ -69,21 +48,21 @@ export async function refresh(req: Request, res: Response): Promise<Response> {
   const refreshToken = req.cookies.refreshToken as string | undefined;
 
   if (!refreshToken) {
-    return res.status(401).json({ message: "Refresh token missing" });
+    throw new AppError(401, "Refresh token missing");
   }
 
   const result = await refreshAccessToken(refreshToken);
 
   if ("error" in result && result.error === "INVALID_REFRESH_TOKEN") {
-    return res.status(403).json({ message: "Invalid refresh token" });
+    throw new AppError(403, "Invalid refresh token");
   }
 
   if ("error" in result && result.error === "EXPIRED_OR_INVALID_REFRESH_TOKEN") {
-    return res.status(403).json({ message: "Refresh token expired or invalid" });
+    throw new AppError(403, "Refresh token expired or invalid");
   }
 
   if ("error" in result) {
-    return res.status(500).json({ message: "Failed to refresh access token" });
+    throw new AppError(500, "Failed to refresh access token");
   }
 
   return res.status(200).json({

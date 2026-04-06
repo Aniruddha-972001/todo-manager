@@ -3,10 +3,16 @@ export interface AuthUser {
   role?: string;
 }
 
+export type TodoPriority = "low" | "medium" | "high";
+
 export interface TodoItem {
   id: string;
   task: string;
   completed: boolean;
+  archived: boolean;
+  priority: TodoPriority;
+  dueDate: string | null;
+  position: number;
   listId: string;
 }
 

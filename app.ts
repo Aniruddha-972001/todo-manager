@@ -11,6 +11,7 @@ import listRoutes from "./routes/listRoutes.js";
 import todoRoutes from "./routes/todoRoutes.js";
 import swaggerSpec from "./config/swagger.js";
 import { FRONTEND_ORIGIN } from "./config/env.js";
+import { errorMiddleware, notFoundMiddleware } from "./middleware/errorMiddleware.js";
 
 const app = express();
 const currentFilePath = fileURLToPath(import.meta.url);
@@ -89,5 +90,8 @@ if (hasBuiltClient) {
     res.sendFile(clientIndexPath);
   });
 }
+
+app.use(notFoundMiddleware);
+app.use(errorMiddleware);
 
 export default app;

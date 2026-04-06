@@ -7,6 +7,7 @@ import {
   getList,
   getListTodos,
   getLists,
+  reorderTodosInList,
   updateList,
 } from "../controllers/listController.js";
 
@@ -244,5 +245,38 @@ router.get("/:id/todos", authMiddleware, getListTodos);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post("/:id/todos", authMiddleware, createTodo);
+
+/**
+ * @swagger
+ * /api/lists/{id}/todos/reorder:
+ *   post:
+ *     summary: Reorder todos within a list
+ *     description: Persists a new drag-and-drop order for all todos in one of the authenticated user's lists.
+ *     tags:
+ *       - Todos
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: List id
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ReorderTodosRequest'
+ *     responses:
+ *       200:
+ *         description: Todos reordered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MessageResponse'
+ */
+router.post("/:id/todos/reorder", authMiddleware, reorderTodosInList);
 
 export default router;

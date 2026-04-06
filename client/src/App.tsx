@@ -12,6 +12,7 @@ import {
   getLists,
   getStoredToken,
   login,
+  reorderTodos,
   logout,
   refreshToken,
   setToken,
@@ -19,7 +20,7 @@ import {
   updateList,
   updateTodo,
 } from "./api";
-import type { AuthUser, TodoList, TodoListWithTodos } from "./types";
+import type { AuthUser, TodoList, TodoListWithTodos, TodoPriority } from "./types";
 
 export default function App() {
   const [busy, setBusy] = useState(false);
@@ -31,8 +32,9 @@ export default function App() {
   const [selectedList, setSelectedList] = useState<TodoListWithTodos | null>(null);
   const [newListName, setNewListName] = useState("");
 
-  const completedTodos = selectedList?.todos.filter((todo) => todo.completed).length ?? 0;
-  const totalTodos = selectedList?.todos.length ?? 0;
+  const activeTodos = selectedList?.todos.filter((todo) => !todo.archived) ?? [];
+  const completedTodos = activeTodos.filter((todo) => todo.completed).length;
+  const totalTodos = activeTodos.length;
 
   async function withFeedback(task: () => Promise<void>) {
     setBusy(true);
@@ -172,13 +174,17 @@ export default function App() {
     });
   };
 
-  const handleCreateTodo = async (task: string) => {
+  const handleCreateTodo = async (payload: {
+    task: string;
+    priority?: TodoPriority;
+    dueDate?: string | null;
+  }) => {
     if (!selectedListId) {
       return;
     }
 
     await withFeedback(async () => {
-      const response = await createTodo(selectedListId, task);
+      const response = await createTodo(selectedListId, payload);
       setMessage(response.message);
       const listResponse = await getList(selectedListId);
       setSelectedList(listResponse.list);
@@ -197,18 +203,6 @@ export default function App() {
     });
   };
 
-  const handleRenameTodo = async (todoId: string, task: string) => {
-    if (!selectedListId) {
-      return;
-    }
-
-    await withFeedback(async () => {
-      await updateTodo(todoId, { task });
-      const listResponse = await getList(selectedListId);
-      setSelectedList(listResponse.list);
-    });
-  };
-
   const handleDeleteTodo = async (todoId: string) => {
     if (!selectedListId) {
       return;
@@ -216,6 +210,39 @@ export default function App() {
 
     await withFeedback(async () => {
       await deleteTodo(todoId);
+      const listResponse = await getList(selectedListId);
+      setSelectedList(listResponse.list);
+    });
+  };
+
+  const handleUpdateTodoDetails = async (
+    todoId: string,
+    payload: Partial<{
+      task: string;
+      completed: boolean;
+      archived: boolean;
+      priority: TodoPriority;
+      dueDate: string | null;
+    }>
+  ) => {
+    if (!selectedListId) {
+      return;
+    }
+
+    await withFeedback(async () => {
+      await updateTodo(todoId, payload);
+      const listResponse = await getList(selectedListId);
+      setSelectedList(listResponse.list);
+    });
+  };
+
+  const handleReorderTodos = async (orderedTodoIds: string[]) => {
+    if (!selectedListId) {
+      return;
+    }
+
+    await withFeedback(async () => {
+      await reorderTodos(selectedListId, orderedTodoIds);
       const listResponse = await getList(selectedListId);
       setSelectedList(listResponse.list);
     });
@@ -286,8 +313,9 @@ export default function App() {
               onDeleteList={handleDeleteList}
               onCreateTodo={handleCreateTodo}
               onToggleTodo={handleToggleTodo}
-              onRenameTodo={handleRenameTodo}
+              onUpdateTodoDetails={handleUpdateTodoDetails}
               onDeleteTodo={handleDeleteTodo}
+              onReorderTodos={handleReorderTodos}
             />
           </div>
         </section>

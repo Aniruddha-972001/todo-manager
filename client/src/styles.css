@@ -31,7 +31,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -159,6 +160,15 @@ button {
   color: var(--danger);
 }
 
+.workspace-status {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(47, 122, 85, 0.1);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
 .auth-only-layout,
 .auth-card {
   max-width: 440px;
@@ -262,7 +272,8 @@ button {
   font-size: 0.88rem;
 }
 
-.field input {
+.field input,
+.field select {
   width: 100%;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.72);
@@ -271,7 +282,8 @@ button {
   color: var(--ink);
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: 2px solid rgba(47, 122, 85, 0.18);
   border-color: rgba(47, 122, 85, 0.26);
 }
@@ -361,6 +373,45 @@ button {
   display: grid;
   gap: 20px;
   grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.workspace-toolbar {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  margin-bottom: 18px;
+}
+
+.toolbar-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.todo-create-grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.filter-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border: 1px solid rgba(47, 122, 85, 0.16);
+  background: rgba(255, 255, 255, 0.62);
+  color: var(--muted);
+  padding: 12px 14px;
+  border-radius: 999px;
+}
+
+.filter-chip.is-active {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border-color: rgba(47, 122, 85, 0.24);
 }
 
 .sidebar-card,
@@ -454,9 +505,15 @@ button {
   background: rgba(238, 245, 240, 0.92);
 }
 
+.todo-card.is-archived {
+  opacity: 0.78;
+  background: rgba(245, 242, 235, 0.94);
+}
+
 .todo-main {
   display: grid;
   gap: 8px;
+  flex: 1;
 }
 
 .todo-check {
@@ -475,10 +532,76 @@ button {
 .todo-meta {
   margin: 0;
   font-size: 0.9rem;
-  padding-left: 30px;
 }
 
 .todo-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.todo-edit-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.todo-meta-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding-left: 30px;
+}
+
+.todo-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.todo-badge,
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border: 1px solid rgba(47, 122, 85, 0.12);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--muted);
+}
+
+.priority-low {
+  background: rgba(79, 136, 102, 0.12);
+  color: #386c4e;
+}
+
+.priority-medium {
+  background: rgba(191, 147, 53, 0.12);
+  color: #896614;
+}
+
+.priority-high {
+  background: rgba(157, 59, 50, 0.12);
+  color: var(--danger);
+}
+
+.todo-inline-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--ink);
+}
+
+.todo-inline-input:focus {
+  outline: 2px solid rgba(47, 122, 85, 0.18);
+  border-color: rgba(47, 122, 85, 0.26);
+}
+
+.todo-inline-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -494,6 +617,24 @@ button {
   color: var(--muted);
 }
 
+.workspace-empty-card {
+  border: 1px dashed rgba(47, 122, 85, 0.2);
+  background: rgba(255, 255, 255, 0.54);
+  border-radius: 20px;
+  padding: 22px 18px;
+  color: var(--muted);
+}
+
+.workspace-empty-card strong {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.workspace-empty-card p {
+  margin: 0;
+}
+
 @media (max-width: 900px) {
   .hero-panel {
     grid-template-columns: 1fr;
@@ -505,6 +646,14 @@ button {
 
   .sidebar-summary,
   .workspace-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .todo-create-grid {
     grid-template-columns: 1fr;
   }
 
@@ -523,6 +672,16 @@ button {
 @media (min-width: 901px) {
   .grid-row {
     grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  .todo-create-grid {
+    grid-template-columns: minmax(0, 1.6fr) minmax(140px, 0.7fr) minmax(170px, 0.8fr) auto;
+    align-items: end;
+  }
+
+  .todo-edit-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(140px, 0.7fr) minmax(160px, 0.8fr) auto;
     align-items: end;
   }
 }
