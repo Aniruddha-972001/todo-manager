@@ -1,5 +1,9 @@
 node_modules/
+mobile/node_modules/
 .env
+.env.local
+.DS_Store
+*.log
 dist/
 data/*.sqlite
 client/node_modules/
@@ -9,3 +13,7 @@ playwright-report/
 client/*.tsbuildinfo
 client/vite.config.js
 client/vite.config.d.ts
+mobile/.expo/
+mobile/.expo-shared/
+mobile/dist/
+mobile/web-build/

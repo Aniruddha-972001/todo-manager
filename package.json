@@ -10,6 +10,10 @@
     "dev": "tsx watch server.ts",
     "e2e": "npm run build && playwright test",
     "e2e:headed": "npm run build && playwright test --headed",
+    "mobile:android": "npm --prefix mobile run android",
+    "mobile:dev": "npm --prefix mobile run start",
+    "mobile:ios": "npm --prefix mobile run ios",
+    "mobile:web": "npm --prefix mobile run web",
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest"
